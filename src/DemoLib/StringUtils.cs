@@ -12,7 +12,7 @@ public static class StringUtils
     public static int WordCount(string input)
     {
         if (string.IsNullOrWhiteSpace(input)) return 0;
-        return input.Length;
+        return input.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
     }
 
     public static string Truncate(string input, int maxLength)
