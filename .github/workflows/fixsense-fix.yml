@@ -63,9 +63,6 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
-        run: npm install
-
       - name: Detect test framework
         run: |
           if [ -f "cypress.config.ts" ] || [ -f "cypress.config.js" ] || [ -f "cypress.json" ]; then
@@ -74,9 +71,15 @@ jobs:
             echo "TEST_FRAMEWORK=vitest" >> $GITHUB_ENV
           elif grep -q '"jest"' package.json 2>/dev/null || [ -f "jest.config.ts" ] || [ -f "jest.config.js" ]; then
             echo "TEST_FRAMEWORK=jest" >> $GITHUB_ENV
+          elif ls *.csproj *.sln 2>/dev/null | head -1 | grep -q .; then
+            echo "TEST_FRAMEWORK=dotnet" >> $GITHUB_ENV
           else
             echo "TEST_FRAMEWORK=playwright" >> $GITHUB_ENV
           fi
+
+      - name: Install Node dependencies
+        if: env.TEST_FRAMEWORK != 'dotnet'
+        run: npm install
 
       - name: Install Playwright browsers
         if: env.TEST_FRAMEWORK == 'playwright'
@@ -89,6 +92,10 @@ jobs:
       - name: Install Cypress
         if: env.TEST_FRAMEWORK == 'cypress'
         run: npx cypress install
+
+      - name: Restore .NET dependencies
+        if: env.TEST_FRAMEWORK == 'dotnet'
+        run: dotnet restore
 
       - name: Create fix branch
         run: |
