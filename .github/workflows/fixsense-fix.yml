@@ -154,6 +154,12 @@ jobs:
             else
               npx jest --verbose 2>&1 | tee test-output.txt || true
             fi
+          elif [ "$TEST_FRAMEWORK" = "dotnet" ]; then
+            if [ -n "${{ inputs.test_name }}" ]; then
+              dotnet test --filter "FullyQualifiedName~${{ inputs.test_name }}" --logger "trx;LogFileName=results.trx" --results-directory test-results --verbosity normal 2>&1 | tee test-output.txt || true
+            else
+              dotnet test --logger "trx;LogFileName=results.trx" --results-directory test-results --verbosity normal 2>&1 | tee test-output.txt || true
+            fi
           else
             TEST_GREP=""
             if [ -n "${{ inputs.test_name }}" ]; then
@@ -199,6 +205,9 @@ jobs:
           Jest:
           - Use "npx jest '<test file or pattern>'" to run specific tests
           - Use "npx jest" to run the full suite
+          .NET (dotnet test):
+          - Use "dotnet test --filter 'FullyQualifiedName~TestName'" to run specific tests
+          - Use "dotnet test" to run all tests
 
           YOUR TASK:
           1. Read the failing test file to understand what is being tested
@@ -245,6 +254,8 @@ jobs:
             npx vitest run --reporter=verbose 2>&1 | tee verify-output.txt
           elif [ "$TEST_FRAMEWORK" = "jest" ]; then
             npx jest --verbose 2>&1 | tee verify-output.txt
+          elif [ "$TEST_FRAMEWORK" = "dotnet" ]; then
+            dotnet test --logger "trx;LogFileName=results.trx" --results-directory test-results --verbosity normal 2>&1 | tee verify-output.txt
           else
             npx playwright test --reporter=list,json 2>&1 | tee verify-output.txt
           fi
@@ -262,7 +273,7 @@ jobs:
           git config user.name "FixSense Bot"
           git config user.email "bot@fixsense.dev"
           git add -A
-          git reset HEAD -- node_modules/ test-results/ playwright-report/ package-lock.json blob-report/ coverage/ 2>/dev/null || true
+          git reset HEAD -- node_modules/ test-results/ playwright-report/ package-lock.json blob-report/ coverage/ bin/ obj/ 2>/dev/null || true
           git commit -m "fix: auto-fix failing tests
 
           Auto-fixed by FixSense AI Agent (${{ env.AI_PROVIDER }})
